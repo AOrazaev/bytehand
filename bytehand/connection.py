@@ -170,4 +170,3 @@ class _SMSResponse(object):
     @property
     def description(self):
         return self._description
-

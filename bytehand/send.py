@@ -40,4 +40,3 @@ def send_sms(to, signature, text, userid, key):
 
     conn = Connection(userid=userid, key=key)
     return conn.send(to=to, signature=signature, text=text)
-

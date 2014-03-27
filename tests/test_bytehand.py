@@ -19,6 +19,7 @@ class TestCaseWithPatchedRequests(unittest.TestCase):
 
         self.last_url = None
         self.post_data = None
+
         def patched_request(mehtod, url, **kwargs):
             self.last_url = url
             self.post_data = kwargs.get('data')
