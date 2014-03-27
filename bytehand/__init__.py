@@ -3,5 +3,7 @@
 """
 
 from definitions import API_URL
-from send_sms import send_sms
+from send import send_sms
 from connection import Connection
+
+__all__ = ['API_URL', 'send_sms', 'Connection']
