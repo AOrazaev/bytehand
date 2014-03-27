@@ -5,21 +5,27 @@ import urlparse
 import urllib
 
 from definitions import API_URL
+from connection import Connection
 
 
-def _generate_url_path(to, text, sign, user_id, key):
-    path = 'send?id={user}&key={key}&to={to}&from={sign}&text={text}'
-    return path.format(
-        user=urllib.quote(user_id),
-        key=urllib.quote(key),
-        to=to,
-        sign=urllib.quote(sign),
-        text=urllib.quote(text)
-    )
+def send_sms(to, signature, text, userid, key):
+    """Fast function for sending sms.
 
-def send_sms(to, text, signature, user_id, key):
+    Create connection with given (userid, key) pair and
+    send sms.
+
+    :note: Your @signature must be verified on bytehand.
+
+    :param to: receiver phone number.
+    :param signature: value of "from"-field of sms message.
+    :param text: message content.
+    :param userid: your bytehand api id.
+    :param key: your bytehand api key.
+
+    :see: https://www.bytehand.com/secure/settings to get your key and id.
+    """
     to = str(to)
-    user_id = str(user_id)
+    userid = str(userid)
     if not to.isdigit():
         raise TypeError('Incorrect "to"-field format. '
                         'It must be string of digits, '
@@ -28,11 +34,10 @@ def send_sms(to, text, signature, user_id, key):
         raise TypeError('Can\'t send empty message.')
     if not signature:
         raise TypeError('Signature should be set.')
-    if not user_id.isdigit():
+    if not userid.isdigit():
         raise TypeError('User id must be digit, '
-                        'but it is: {}'.format(user_id))
+                        'but it is: {}'.format(userid))
 
-    path = _generate_url_path(to, text, signature, user_id, key)
-    response = requests.get(urlparse.urljoin(API_URL, path))
-
+    conn = Connection(userid=userid, key=key)
+    return conn.send(to=to, signature=signature, text=text)
 

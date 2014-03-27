@@ -43,6 +43,8 @@ class Connection(object):
     def send(self, to=None, signature=None, text=None):
         """Send sms message to @to from @signature with given @text.
 
+        :note: Your @signature must be verified on bytehand.
+
         :param to: receiver phone number.
         :param signature: "from" field of sms message.
         :param text: message content.
@@ -57,6 +59,8 @@ class Connection(object):
 
         :param msgs: list of dicts (messages) in format
                      {"to": <TO>, "from": <SIGNATURE>, "text": <CONTENT>}
+
+        :note: Your @signature must be verified on bytehand.
         """
         data = json.dumps(msgs)
         headers = {'Content-Type': 'application/json;charset=UTF-8'}
