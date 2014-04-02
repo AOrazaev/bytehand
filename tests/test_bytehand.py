@@ -11,29 +11,43 @@ import json
 class TestCaseWithPatchedRequests(unittest.TestCase):
     """Monkey-patch requests.get and requests.post functions for tests
     """
+
+    ok_response = requests.Response()
+    ok_response.status_code = 200
+    ok_response._content = (
+        '[{"status": "0", "description": "4242424242"}]'
+    )
+
+    balance_response = requests.Response()
+    balance_response.status_code = 200
+    balance_response._content = (
+        '{"status": "0", "description": "100500.00"}'
+    )
+
+    signature_response = requests.Response()
+    signature_response.status_code = 200
+    signature_response._content = (
+        '[{"id": 42, "description": "Test signature",'
+        '  "text": "Peter", "created_at": "2042-12-31",'
+        '  "state": "ACCEPTED"}]'
+    )
+
     def setUp(self):
         self.requests_request = requests.request
-        ok_response = requests.Response()
-        ok_response.status_code = 200
-        ok_response._content = (
-            '[{"status": "0", "description": "4242424242"}]'
-        )
-
-        balance_response = requests.Response()
-        balance_response.status_code = 200
-        balance_response._content = (
-            '{"status": "0", "description": "100500.00"}'
-        )
 
         self.last_url = None
         self.post_data = None
+        self.request_urls = []
 
         def patched_request(mehtod, url, **kwargs):
             self.last_url = url
+            self.request_urls.append(url)
             self.post_data = kwargs.get('data')
             if urlparse.urlparse(url).path.endswith('balance'):
-                return balance_response
-            return ok_response
+                return self.balance_response
+            elif urlparse.urlparse(url).path.endswith('signatures'):
+                return self.signature_response
+            return self.ok_response
         requests.request = patched_request
 
     def tearDown(self):
@@ -172,6 +186,25 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
 
         conn.signatures()
         check_signature_url()
+
+    def test_signature(self):
+        conn = bytehand.Connection(userid=1342, key='MYKEY4321')
+        result = conn.signature('Peter')
+        parsed_url = urlparse.urlparse(self.last_url)
+        self.assertEqual(
+            parsed_url._replace(query='').geturl(),
+            urlparse.urljoin(bytehand.API_URL, 'signatures')
+        )
+        self.assertEqual(
+            dict(kv.split('=') for kv in parsed_url.query.split('&')),
+            dict(id='1342', key='MYKEY4321')
+        )
+        self.assertEqual(result, self.signature_response.json()[0])
+
+        self.assertRaises(
+            LookupError,
+            lambda: conn.signature('NoSuchSignature')
+        )
 
 
 if __name__ == '__main__':

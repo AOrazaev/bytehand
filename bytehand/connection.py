@@ -159,6 +159,21 @@ class Connection(object):
         resp = self._get_request('signatures', qargs=qargs, verify=False)
         return resp.json()
 
+    def signature(self, signature):
+        """:returns: dict, detailed information about given signature.
+
+        :param signature: get details for this siganture.
+
+        :raises LookupError: if no given signature in signature list.
+
+        :see: signature dict format in `help(bytehand.signatures)`
+        """
+        for sign_details in self.signatures():
+            if sign_details['text'] == signature:
+                return sign_details
+        raise LookupError('Can\'t find given signature {}'.format(signature) +
+                          ' in signature list.')
+
     def _request(self, method, request_type, qargs={}, data=None, **kwargs):
         query = '&'.join('{}={}'.format(arg, urllib.quote(str(val)))
                          for arg, val in qargs.iteritems())
