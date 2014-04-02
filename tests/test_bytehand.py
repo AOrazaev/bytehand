@@ -44,13 +44,15 @@ class TestCaseWithPatchedRequests(unittest.TestCase):
         self.requests_request = requests.request
 
         self.last_url = None
+        self.request_method = None
         self.post_data = None
         self.request_urls = []
 
-        def patched_request(mehtod, url, **kwargs):
+        def patched_request(method, url, **kwargs):
             self.last_url = url
             self.request_urls.append(url)
             self.post_data = kwargs.get('data')
+            self.request_method = method
             if urlparse.urlparse(url).path.endswith('balance'):
                 return self.balance_response
             elif urlparse.urlparse(url).path.endswith('signatures'):
@@ -156,6 +158,8 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
     def test_balance(self):
         conn = bytehand.Connection(userid=1342, key='MYKEY4321')
         balance = conn.balance()
+        self.assertEqual(balance, '100500.00')
+
         parsed_url = urlparse.urlparse(self.last_url)
         self.assertEqual(
             parsed_url._replace(query='').geturl(),
@@ -223,6 +227,8 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
 
         conn.new_signature(test_sign, test_description)
 
+        self.assertEqual(self.request_method, 'post')
+
         parsed_url = urlparse.urlparse(self.last_url)
         self.assertEqual(
             parsed_url._replace(query='').geturl(),
@@ -232,6 +238,21 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
             dict(kv.split('=') for kv in parsed_url.query.split('&')),
             dict(id='1342', key='MYKEY4321', text=test_sign,
                  description=urllib.quote(test_description))
+        )
+
+    def test_delete_signature(self):
+        conn = bytehand.Connection(userid=1342, key='MYKEY4321')
+
+        conn.delete_signature('Peter')
+        self.assertEqual(self.request_method, 'delete')
+        parsed_url = urlparse.urlparse(self.last_url)
+        self.assertEqual(
+            parsed_url._replace(query='').geturl(),
+            urlparse.urljoin(bytehand.API_URL, 'signature')
+        )
+        self.assertEqual(
+            dict(kv.split('=') for kv in parsed_url.query.split('&')),
+            dict(id='1342', key='MYKEY4321', signature='42')
         )
 
 

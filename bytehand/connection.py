@@ -109,13 +109,8 @@ class Connection(object):
         """:returns: float, how much money in rubles on your account."""
         qargs = dict(id=self.userid, key=self.key)
         resp = self._get_request('balance', qargs=qargs, verify=False)
-        resp = resp.json()
-        if int(resp['status']) != 0:
-            raise ConnectionError(
-                'Nonzero status: {0}\n'.format(resp['status']) +
-                'Description: {0}'.format(resp['description'])
-            )
-        return float(resp['description'])
+        self._check_status(resp)
+        return resp.json()['description']
 
     def signatures(self, state=None):
         """Send `signatures` request to bytehand api.
@@ -183,6 +178,22 @@ class Connection(object):
         qargs = dict(id=self.userid, key=self.key,
                      text=signature, description=description)
         resp = self._post_request('signature', qargs=qargs, verify=False)
+        self._check_status(resp)
+
+    def delete_signature(self, signature):
+        """Delete given signature from your signature list.
+
+        :param signature: signature text
+        """
+        try:
+            signature = self.signature(signature)
+        except LookupError:
+            return
+        qargs = dict(id=self.userid, key=self.key, signature=signature['id'])
+        resp = self._delete_request('signature', qargs=qargs, verify=False)
+        self._check_status(resp)
+
+    def _check_status(self, resp):
         resp = resp.json()
         if int(resp['status']) != 0:
             raise ConnectionError(
@@ -201,6 +212,9 @@ class Connection(object):
                                   'Url = "{}". '.format(url) +
                                   'POST data: {}'.format(data))
         return resp
+
+    def _delete_request(self, request_type, qargs, **kwargs):
+        return self._request('delete', request_type, qargs, **kwargs)
 
     def _get_request(self, request_type, qargs, **kwargs):
         return self._request('get', request_type, qargs, **kwargs)
@@ -233,9 +247,9 @@ class _SMSResponse(object):
             or self._details['description'] != 'DELIVERED':
             self._details = self._connection.details(self._description)
             if self._details['status'] != 0:
-                raise RuntimeError('Can\'t get details. '
-                                   'Nonzero status of bytehand response:' +
-                                   self._details['description'])
+                raise ConnectionError('Can\'t get details. '
+                                      'Nonzero status of bytehand response:' +
+                                      self._details['description'])
 
     @property
     def is_delivered(self):
@@ -246,8 +260,8 @@ class _SMSResponse(object):
     def details(self):
         """Get detailed information about sended sms."""
         if not self.ok:
-            raise RuntimeError('Cannot get details of message from '
-                               'response with error')
+            raise ConnectionError('Cannot get details of message from '
+                                  'response with error')
         self._get_details()
         return self._details
 
