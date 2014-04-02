@@ -117,6 +117,48 @@ class Connection(object):
             )
         return float(resp['description'])
 
+    def signatures(self, state=None):
+        """Send `signatures` request to bytehand api.
+
+        :param state: str one of ('NEW', 'ACCEPTED', 'REJECTED'),
+        case insensative.
+
+        :returns: list of signatures in next format:
+
+            {
+                "id": <SIGNATURE_ID>,
+                "text": <SIGNATURE_TEXT>,
+                "description: <SIGNATURE_DESCRIPTION>,
+                "created_at": <DATE_WHEN_CREATED>,
+                "state": <SIGNATURE_STATE>
+            }
+
+        `<SIGNATURE_ID>`
+            internal signature id.
+        `<SIGNATURE_TEXT>`
+            text of signature
+        `<SIGNATURE_DESCRIPTION>`
+            description you set when create signature.
+        `<DATE_WHEN_CREATED>`
+            when you create signature
+        `<SIGNATURE_STATE>`
+            one of ('NEW', 'ACCEPTED', 'REJECTED'):
+            - 'ACCEPTED': You can use this signature to send sms.
+            - 'NEW': You can't use this signature. It wasn't
+              checked by bytehand moderator.
+            - 'REJECTED': You can't use this signature. It was
+              checked by bytehand moderator and rejected.
+        """
+        if state is not None and \
+            state.upper() not in ('NEW', 'ACCEPTED', 'REJECTED'):
+            raise ValueError('Bad `state` value: "{}"'.format(state))
+        qargs = dict(id=self.userid, key=self.key)
+        qargs.update(
+            {'state': state.upper()} if state is not None else {}
+        )
+        resp = self._get_request('signatures', qargs=qargs, verify=False)
+        return resp.json()
+
     def _request(self, method, request_type, qargs={}, data=None, **kwargs):
         query = '&'.join('{}={}'.format(arg, urllib.quote(str(val)))
                          for arg, val in qargs.iteritems())

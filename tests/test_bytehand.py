@@ -142,6 +142,37 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
             dict(id='1342', key='MYKEY4321')
         )
 
+    def test_signatures(self):
+        conn = bytehand.Connection(userid=1342, key='MYKEY4321')
+        self.assertRaises(
+            ValueError,
+            lambda: conn.signatures(state='unknown_state')
+        )
+
+        def check_signature_url(state=None):
+            parsed_url = urlparse.urlparse(self.last_url)
+            self.assertEqual(
+                parsed_url._replace(query='').geturl(),
+                urlparse.urljoin(bytehand.API_URL, 'signatures')
+            )
+            expect = dict(id='1342', key='MYKEY4321')
+            expect.update({'state': state} if state is not None else {})
+            self.assertEqual(
+                dict(kv.split('=') for kv in parsed_url.query.split('&')),
+                expect
+            )
+        conn.signatures(state='new')
+        check_signature_url(state='NEW')
+
+        conn.signatures(state='accepted')
+        check_signature_url(state='ACCEPTED')
+
+        conn.signatures(state='REJECTED')
+        check_signature_url(state='REJECTED')
+
+        conn.signatures()
+        check_signature_url()
+
 
 if __name__ == '__main__':
     unittest.main()
