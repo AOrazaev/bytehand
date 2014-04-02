@@ -15,7 +15,15 @@ class TestCaseWithPatchedRequests(unittest.TestCase):
         self.requests_request = requests.request
         ok_response = requests.Response()
         ok_response.status_code = 200
-        ok_response._content = '[{"status": "0", "description": "4242424242"}]'
+        ok_response._content = (
+            '[{"status": "0", "description": "4242424242"}]'
+        )
+
+        balance_response = requests.Response()
+        balance_response.status_code = 200
+        balance_response._content = (
+            '{"status": "0", "description": "100500.00"}'
+        )
 
         self.last_url = None
         self.post_data = None
@@ -23,6 +31,8 @@ class TestCaseWithPatchedRequests(unittest.TestCase):
         def patched_request(mehtod, url, **kwargs):
             self.last_url = url
             self.post_data = kwargs.get('data')
+            if urlparse.urlparse(url).path.endswith('balance'):
+                return balance_response
             return ok_response
         requests.request = patched_request
 
@@ -117,6 +127,19 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
         self.assertEqual(
             dict(kv.split('=') for kv in parsed_url.query.split('&')),
             dict(id='1342', key='MYKEY4321', message='12345')
+        )
+
+    def test_balance(self):
+        conn = bytehand.Connection(userid=1342, key='MYKEY4321')
+        balance = conn.balance()
+        parsed_url = urlparse.urlparse(self.last_url)
+        self.assertEqual(
+            parsed_url._replace(query='').geturl(),
+            urlparse.urljoin(bytehand.API_URL, 'balance')
+        )
+        self.assertEqual(
+            dict(kv.split('=') for kv in parsed_url.query.split('&')),
+            dict(id='1342', key='MYKEY4321')
         )
 
 

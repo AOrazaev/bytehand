@@ -101,17 +101,27 @@ class Connection(object):
             `<COST>`
                 message cost in rubles.
         """
-        headers = {'Content-Type': 'application/json;charset=UTF-8'}
         qargs = dict(id=self.userid, key=self.key, message=msgid)
-        resp = self._post_request('details', headers=headers, qargs=qargs,
-                                  verify=False)
+        resp = self._get_request('details', qargs=qargs, verify=False)
         return resp.json()
 
-    def _request(self, method, request_type, qargs={}, **kwargs):
+    def balance(self):
+        """:returns: float, how much money in rubles on your account."""
+        qargs = dict(id=self.userid, key=self.key)
+        resp = self._get_request('balance', qargs=qargs, verify=False)
+        resp = resp.json()
+        if int(resp['status']) != 0:
+            raise ConnectionError(
+                'Nonzero status: {0}\n'.format(resp['status']) +
+                'Description: {0}'.format(resp['description'])
+            )
+        return float(resp['description'])
+
+    def _request(self, method, request_type, qargs={}, data=None, **kwargs):
         query = '&'.join('{}={}'.format(arg, urllib.quote(str(val)))
                          for arg, val in qargs.iteritems())
         url = self._API_URL._replace(path=request_type, query=query).geturl()
-        resp = requests.request(method, url, **kwargs)
+        resp = requests.request(method, url, data=data, **kwargs)
         if not resp.ok:
             raise ConnectionError('Http response error. '
                                   'Status = {}. '.format(resp.status_code) +
@@ -138,30 +148,39 @@ class _SMSResponse(object):
         self._connection = conn
         self._status = status
         self._description = description
-
-        # cached information
         self._details = None
-        self._delivery_status = None
 
     @property
     def ok(self):
         """Check is sms sending response is ok."""
         return self.status == 0
 
+    def _get_details(self):
+        if self._details is None:
+            self._details = self._connection.details(self._description)
+            if self._details['status'] != 0:
+                raise RuntimeError('Can\'t get details. '
+                                   'Nonzero status of bytehand response:' +
+                                   self._details['description'])
+
     @property
     def is_delivered(self):
         """Check is sms delivered to reciever."""
-        raise NotImplementedError("FIXME")
+        return self.details['description'] == 'DELIVERED'
 
     @property
     def details(self):
         """Get detailed information about sended sms."""
-        raise NotImplementedError("FIXME")
+        if not self.ok:
+            raise RuntimeError('Cannot get details of message from '
+                               'response with error')
+        self._get_details()
+        return self._details
 
     @property
     def delivery_status(self):
         """Check sms delivery status."""
-        raise NotImplementedError("FIXME")
+        return self.details['description']
 
     @property
     def status(self):
