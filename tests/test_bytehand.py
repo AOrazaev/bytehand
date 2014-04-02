@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import bytehand
 
 import unittest
+import urllib
 import requests
 import urlparse
 import json
@@ -32,6 +34,12 @@ class TestCaseWithPatchedRequests(unittest.TestCase):
         '  "state": "ACCEPTED"}]'
     )
 
+    new_signature_response = requests.Response()
+    new_signature_response.status_code = 200
+    new_signature_response._content = (
+        '{"status": "0", "description": "42"}'
+    )
+
     def setUp(self):
         self.requests_request = requests.request
 
@@ -47,6 +55,8 @@ class TestCaseWithPatchedRequests(unittest.TestCase):
                 return self.balance_response
             elif urlparse.urlparse(url).path.endswith('signatures'):
                 return self.signature_response
+            elif urlparse.urlparse(url).path.endswith('signature'):
+                return self.new_signature_response
             return self.ok_response
         requests.request = patched_request
 
@@ -204,6 +214,24 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
         self.assertRaises(
             LookupError,
             lambda: conn.signature('NoSuchSignature')
+        )
+
+    def test_new_signature(self):
+        conn = bytehand.Connection(userid=1342, key='MYKEY4321')
+        test_sign = 'test'
+        test_description = 'юникод: некоторая тестовая подпись'
+
+        conn.new_signature(test_sign, test_description)
+
+        parsed_url = urlparse.urlparse(self.last_url)
+        self.assertEqual(
+            parsed_url._replace(query='').geturl(),
+            urlparse.urljoin(bytehand.API_URL, 'signature')
+        )
+        self.assertEqual(
+            dict(kv.split('=') for kv in parsed_url.query.split('&')),
+            dict(id='1342', key='MYKEY4321', text=test_sign,
+                 description=urllib.quote(test_description))
         )
 
 

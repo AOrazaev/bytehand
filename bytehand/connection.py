@@ -174,6 +174,22 @@ class Connection(object):
         raise LookupError('Can\'t find given signature {}'.format(signature) +
                           ' in signature list.')
 
+    def new_signature(self, signature, description):
+        """Send new signature to moderation.
+
+        :param signature: signature text
+        :param description: descriptions for moderator
+        """
+        qargs = dict(id=self.userid, key=self.key,
+                     text=signature, description=description)
+        resp = self._post_request('signature', qargs=qargs, verify=False)
+        resp = resp.json()
+        if int(resp['status']) != 0:
+            raise ConnectionError(
+                'Nonzero status: {0}\n'.format(resp['status']) +
+                'Description: {0}'.format(resp['description'])
+            )
+
     def _request(self, method, request_type, qargs={}, data=None, **kwargs):
         query = '&'.join('{}={}'.format(arg, urllib.quote(str(val)))
                          for arg, val in qargs.iteritems())
