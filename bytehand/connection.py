@@ -198,7 +198,8 @@ class _SMSResponse(object):
         return self.status == 0
 
     def _get_details(self):
-        if self._details is None:
+        if self._details is None \
+            or self._details['description'] != 'DELIVERED':
             self._details = self._connection.details(self._description)
             if self._details['status'] != 0:
                 raise RuntimeError('Can\'t get details. '
