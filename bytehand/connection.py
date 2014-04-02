@@ -181,7 +181,9 @@ class Connection(object):
         self._check_status(resp)
 
     def delete_signature(self, signature):
-        """Delete given signature from your signature list.
+        """Delete given @signature from your signature list.
+        If given @signature is not represented in your signature list,
+        when nothing happens.
 
         :param signature: signature text
         """
