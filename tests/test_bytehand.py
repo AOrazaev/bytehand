@@ -235,9 +235,9 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
             urlparse.urljoin(bytehand.API_URL, 'signature')
         )
         self.assertEqual(
-            dict(kv.split('=') for kv in parsed_url.query.split('&')),
-            dict(id='1342', key='MYKEY4321', text=test_sign,
-                 description=urllib.quote(test_description))
+            parsed_url.query,
+            urllib.urlencode(dict(id='1342', key='MYKEY4321',
+                             text=test_sign, description=test_description))
         )
 
     def test_delete_signature(self):

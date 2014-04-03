@@ -204,8 +204,7 @@ class Connection(object):
             )
 
     def _request(self, method, request_type, qargs={}, data=None, **kwargs):
-        query = '&'.join('{}={}'.format(arg, urllib.quote(str(val)))
-                         for arg, val in qargs.iteritems())
+        query = urllib.urlencode(qargs)
         url = self._API_URL._replace(path=request_type, query=query).geturl()
         resp = requests.request(method, url, data=data, **kwargs)
         if not resp.ok:
