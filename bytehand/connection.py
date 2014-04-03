@@ -175,9 +175,10 @@ class Connection(object):
         :param signature: signature text
         :param description: descriptions for moderator
         """
-        qargs = dict(id=self.userid, key=self.key,
-                     text=signature, description=description)
-        resp = self._post_request('signature', qargs=qargs, verify=False)
+        qargs = dict(id=self.userid, key=self.key, text=signature)
+        resp = self._post_request('signature', qargs=qargs,
+                                  data={'description': description},
+                                  verify=False)
         self._check_status(resp)
 
     def delete_signature(self, signature):

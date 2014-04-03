@@ -236,9 +236,9 @@ class TestBytehandConnection(TestCaseWithPatchedRequests):
         )
         self.assertEqual(
             parsed_url.query,
-            urllib.urlencode(dict(id='1342', key='MYKEY4321',
-                             text=test_sign, description=test_description))
+            urllib.urlencode(dict(id='1342', key='MYKEY4321', text=test_sign))
         )
+        self.assertEqual(self.post_data, {'description': test_description})
 
     def test_delete_signature(self):
         conn = bytehand.Connection(userid=1342, key='MYKEY4321')
