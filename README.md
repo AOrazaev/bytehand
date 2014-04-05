@@ -5,10 +5,9 @@ Python module for work with sms gateway [bytehand.com](https://www.bytehand.com)
 
 ## Why to use bytehand?
 
-* You can use it **free** if your sms traffic is low. (< ~15 sms)
-  For home projects for example.
+* You can use it **free** if your sms traffic is low (< ~15 sms)
 
-* It has simple http api wrapped in this python module. =)
+* It has simple http api wrapped in this python module =)
 
 ## Quick start
 
