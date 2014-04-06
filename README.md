@@ -20,22 +20,23 @@ for access to api functions.
 
 ### 2. Create connection
 
+```python
     >>> USER_ID, KEY = 0000, 'your_key'
     >>> import bytehand
     >>> conn = bytehand.Connection(userid=USER_ID, key=KEY)
-
+```
 ### 3. Approve your signature
 
 Try to type clear well-formed description for your signature.
 It will be faster approved by bytehand moderator.
-
+```python
     >>> conn.new_signature(
     ...     'vladimir',
     ...     'Personal signature.'
     ... )
     >>> conn.signature('vladimir')['state']
     'NEW'
-
+```
 #### Get signature faster
 
 You can sign your sms by your phone number and approove this signature
@@ -44,7 +45,7 @@ in 2 minutes.
 Use this [page](https://www.bytehand.com/secure/add_signature).
 
 ### 4. Wait for signature approving and send your sms
-
+```python
     >>> conn.signature('vladimir')['state']
     'ACCEPTED'
     >>> response = conn.send(
@@ -54,3 +55,4 @@ Use this [page](https://www.bytehand.com/secure/add_signature).
     ... )
     >>> response.is_delivered
     True
+```
