@@ -10,5 +10,5 @@ setup(name='Bytehand',
       install_requires=['requests>=2.2.1'],
       url='https://github.com/aorazaev/bytehand',
       packages=['bytehand'],
-      license = "MIT"
+      license="MIT"
      )
